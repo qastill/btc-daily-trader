@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BTC Daily Trader</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --card: #111111;
+  --card2: #161616;
+  --line: #222222;
+  --line2: #2a2a2a;
+  --btc: #f7931a;
+  --green: #00c896;
+  --red: #ff3b5c;
+  --blue: #3d9eff;
+  --text: #e8e8e8;
+  --dim: #666;
+  --dim2: #444;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Manrope', sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;max-width:480px;margin:0 auto;padding:0 0 80px}
+
+/* header */
+.hdr{padding:20px 20px 0;display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.hdr-brand{display:flex;align-items:center;gap:10px}
+.hdr-icon{width:36px;height:36px;background:var(--btc);border-radius:10px;display:grid;place-items:center;font-size:18px;font-weight:900;color:#000;font-family:var(--mono)}
+.hdr-title{font-size:16px;font-weight:800;letter-spacing:-0.3px}
+.hdr-title span{color:var(--btc)}
+.hdr-date{font-family:var(--mono);font-size:10px;color:var(--dim)}
+
+/* modal strip */
+.modal-strip{margin:0 16px 20px;background:var(--card);border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line)}
+.modal-info{display:flex;flex-direction:column;gap:2px}
+.modal-lbl{font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase}
+.modal-val{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--btc)}
+.modal-sub{font-size:10px;color:var(--dim);font-family:var(--mono)}
+.modal-edit{background:none;border:1px solid var(--line2);color:var(--dim);font-family:var(--mono);font-size:11px;padding:6px 12px;border-radius:7px;cursor:pointer;transition:all .15s}
+.modal-edit:hover{border-color:var(--btc);color:var(--btc)}
+
+/* section label */
+.sec-lbl{padding:0 20px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+
+/* KALKULATOR CARD */
+.calc-card{margin:0 16px 20px;background:var(--card);border-radius:16px;border:1px solid var(--line);overflow:hidden}
+.calc-top{padding:16px;border-bottom:1px solid var(--line)}
+
+/* input row */
+.irow{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.irow:last-child{margin-bottom:0}
+.irow label{font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase}
+.irow-inner{display:flex;align-items:center;background:var(--bg);border:1px solid var(--line2);border-radius:9px;overflow:hidden;transition:border-color .15s}
+.irow-inner:focus-within{border-color:var(--btc)}
+.irow-inner input{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:var(--mono);font-size:15px;font-weight:600;padding:11px 13px}
+.irow-inner .unit{font-family:var(--mono);font-size:11px;color:var(--dim);padding-right:12px}
+.irow-inner input::placeholder{color:var(--dim2)}
+
+/* tp sl buttons */
+.pct-row{display:flex;gap:6px;margin-top:6px}
+.pct-btn{flex:1;padding:7px 4px;border-radius:7px;border:1px solid var(--line2);background:none;font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .15s;color:var(--dim)}
+.pct-btn.tp{color:var(--green);border-color:rgba(0,200,150,.2)}
+.pct-btn.tp.on{background:rgba(0,200,150,.12);border-color:var(--green)}
+.pct-btn.sl{color:var(--red);border-color:rgba(255,59,92,.2)}
+.pct-btn.sl.on{background:rgba(255,59,92,.12);border-color:var(--red)}
+
+/* result panel */
+.calc-result{padding:16px;background:var(--card2)}
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.res-item{background:var(--bg);border-radius:10px;padding:11px 12px;border:1px solid var(--line)}
+.res-item.full{grid-column:1/-1}
+.res-lbl{font-size:9px;color:var(--dim);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px}
+.res-val{font-family:var(--mono);font-size:14px;font-weight:700}
+.res-val.g{color:var(--green)}
+.res-val.r{color:var(--red)}
+.res-val.b{color:var(--blue)}
+.res-val.o{color:var(--btc)}
+.res-sub{font-size:10px;color:var(--dim);font-family:var(--mono);margin-top:2px}
+
+/* RR bar */
+.rr-wrap{background:var(--bg);border-radius:10px;padding:11px 12px;border:1px solid var(--line);margin-bottom:12px}
+.rr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.rr-lbl{font-size:9px;color:var(--dim);letter-spacing:1.2px;text-transform:uppercase}
+.rr-score{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--btc)}
+.rr-track{height:6px;background:var(--line2);border-radius:99px;overflow:hidden}
+.rr-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--red),var(--btc),var(--green));transition:width .4s}
+
+/* verdict */
+.verdict{border-radius:10px;padding:11px 13px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px}
+.verdict.good{background:rgba(0,200,150,.08);border:1px solid rgba(0,200,150,.2);color:var(--green)}
+.verdict.warn{background:rgba(247,147,26,.08);border:1px solid rgba(247,147,26,.2);color:var(--btc)}
+.verdict.bad{background:rgba(255,59,92,.08);border:1px solid rgba(255,59,92,.2);color:var(--red)}
+
+/* action buttons */
+.calc-actions{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px}
+.btn-log{flex:1;padding:12px;border-radius:10px;border:none;font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer;transition:all .15s}
+.btn-log.primary{background:var(--btc);color:#000}
+.btn-log.primary:hover{opacity:.9}
+.btn-log.secondary{background:var(--card2);color:var(--dim);border:1px solid var(--line2)}
+.btn-log.secondary:hover{border-color:var(--line);color:var(--text)}
+
+/* JURNAL */
+.journal{padding:0 16px}
+.trade-item{background:var(--card);border-radius:14px;border:1px solid var(--line);margin-bottom:10px;overflow:hidden;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.ti-head{display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer}
+.ti-head.open{border-bottom:1px solid var(--line)}
+
+.ti-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.ti-dot.win{background:var(--green)}
+.ti-dot.loss{background:var(--red)}
+.ti-dot.open-pos{background:var(--btc)}
+.ti-dot.skip{background:var(--blue);border:2px solid var(--blue)}
+.ti-dot.waiting{background:var(--dim2)}
+
+.ti-info{flex:1}
+.ti-info .date{font-size:10px;color:var(--dim);font-family:var(--mono)}
+.ti-info .price{font-size:13px;font-weight:700;margin-top:1px}
+
+.ti-right{text-align:right}
+.ti-pnl{font-family:var(--mono);font-size:14px;font-weight:700}
+.ti-pnl.pos{color:var(--green)}
+.ti-pnl.neg{color:var(--red)}
+.ti-pnl.neutral{color:var(--dim)}
+.ti-status{font-size:10px;color:var(--dim);margin-top:2px}
+
+/* trade detail */
+.ti-body{display:none;padding:12px 14px;background:var(--card2)}
+.ti-body.show{display:block}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px}
+.dg-item{background:var(--bg);border-radius:8px;padding:8px 10px}
+.dg-lbl{font-size:9px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px}
+.dg-val{font-family:var(--mono);font-size:12px;font-weight:600}
+.dg-val.g{color:var(--green)} .dg-val.r{color:var(--red)} .dg-val.o{color:var(--btc)}
+
+/* close trade form */
+.close-form{background:var(--bg);border-radius:10px;padding:12px;border:1px solid var(--line2)}
+.cf-title{font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.cf-row{display:flex;gap:8px;align-items:center}
+.cf-row input{flex:1;background:var(--card2);border:1px solid var(--line2);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:13px;padding:9px 11px;outline:none;transition:border-color .15s}
+.cf-row input:focus{border-color:var(--btc)}
+.cf-btn{padding:9px 14px;border-radius:8px;border:none;font-family:var(--sans);font-size:12px;font-weight:700;cursor:pointer}
+.cf-btn.close-win{background:rgba(0,200,150,.15);color:var(--green);border:1px solid rgba(0,200,150,.3)}
+.cf-btn.close-loss{background:rgba(255,59,92,.15);color:var(--red);border:1px solid rgba(255,59,92,.3)}
+.cf-btn.close-skip{background:rgba(61,158,255,.15);color:var(--blue);border:1px solid rgba(61,158,255,.3)}
+.del-trade{background:none;border:none;color:var(--dim2);font-size:16px;cursor:pointer;padding:2px 4px;transition:color .15s;line-height:1;margin-top:6px;display:block;width:100%;text-align:center}
+.del-trade:hover{color:var(--red)}
+
+/* stats bar */
+.stats-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 16px 20px}
+.sb-item{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+.sb-lbl{font-size:9px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.sb-val{font-family:var(--mono);font-size:15px;font-weight:700}
+.sb-val.g{color:var(--green)} .sb-val.r{color:var(--red)} .sb-val.o{color:var(--btc)}
+
+/* rules reminder */
+.rules{margin:0 16px 20px;background:var(--card);border-radius:14px;border:1px solid var(--line);padding:14px 16px}
+.rules-title{font-size:10px;color:var(--btc);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;font-weight:700}
+.rule-item{display:flex;align-items:flex-start;gap:8px;margin-bottom:7px;font-size:12px;color:var(--dim)}
+.rule-item:last-child{margin-bottom:0}
+.rule-item .bullet{color:var(--btc);font-size:14px;line-height:1.3;flex-shrink:0}
+
+/* empty */
+.empty-j{text-align:center;padding:32px 20px;color:var(--dim);font-family:var(--mono);font-size:12px}
+
+/* modal overlay */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;align-items:flex-end;justify-content:center}
+.overlay.show{display:flex}
+.modal-box{background:var(--card);border-radius:20px 20px 0 0;border:1px solid var(--line);padding:24px 20px;width:100%;max-width:480px}
+.modal-title{font-size:14px;font-weight:800;margin-bottom:16px}
+.modal-input-row{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.modal-input-row label{font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase}
+.modal-input-row input{background:var(--bg);border:1px solid var(--line2);border-radius:9px;color:var(--text);font-family:var(--mono);font-size:16px;font-weight:600;padding:12px 14px;outline:none;transition:border-color .15s}
+.modal-input-row input:focus{border-color:var(--btc)}
+.modal-btns{display:flex;gap:8px;margin-top:4px}
+.mbtn{flex:1;padding:12px;border-radius:10px;border:none;font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer}
+.mbtn.confirm{background:var(--btc);color:#000}
+.mbtn.cancel{background:var(--card2);color:var(--dim);border:1px solid var(--line2)}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-brand">
+    <div class="hdr-icon">₿</div>
+    <div class="hdr-title">BTC <span>Daily</span></div>
+  </div>
+  <div class="hdr-date" id="clock">—</div>
+</div>
+
+<!-- MODAL STRIP -->
+<div class="modal-strip">
+  <div class="modal-info">
+    <div class="modal-lbl">Modal Aktif</div>
+    <div class="modal-val" id="dispModal">Rp 250.000.000</div>
+    <div class="modal-sub" id="dispDeploy">Deployed: Rp 0 · Cash: Rp 250jt</div>
+  </div>
+  <button class="modal-edit" onclick="openModalEdit()">✏ Ubah</button>
+</div>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="sb-item">
+    <div class="sb-lbl">Win Rate</div>
+    <div class="sb-val o" id="sbWR">—</div>
+  </div>
+  <div class="sb-item">
+    <div class="sb-lbl">Total P&L</div>
+    <div class="sb-val" id="sbPnl">Rp 0</div>
+  </div>
+  <div class="sb-item">
+    <div class="sb-lbl">Akurasi Zona</div>
+    <div class="sb-val b" id="sbZone">—</div>
+    <div style="font-size:9px;color:var(--dim);font-family:var(--mono);margin-top:2px" id="sbZoneSub">avg meleset</div>
+  </div>
+</div>
+
+<!-- KALKULATOR -->
+<div class="sec-lbl">🧮 Kalkulator Harian</div>
+<div class="calc-card">
+  <div class="calc-top">
+
+    <div class="irow">
+      <label>Harga Entry BTC (USD)</label>
+      <div class="irow-inner">
+        <input type="number" id="iEntry" placeholder="83500" oninput="calc()">
+        <span class="unit">USD</span>
+      </div>
+    </div>
+
+    <div class="irow">
+      <label>Modal Trade</label>
+      <div class="irow-inner">
+        <input type="number" id="iModal" placeholder="100000000" oninput="calc()">
+        <span class="unit">IDR</span>
+      </div>
+    </div>
+
+    <div class="irow">
+      <label>Take Profit %</label>
+      <div class="irow-inner">
+        <input type="number" id="iTP" placeholder="4" step="0.5" oninput="calc(); syncPctBtns()">
+        <span class="unit">%</span>
+      </div>
+      <div class="pct-row">
+        <button class="pct-btn tp" onclick="setPct('tp',2)">+2%</button>
+        <button class="pct-btn tp" onclick="setPct('tp',3)">+3%</button>
+        <button class="pct-btn tp" onclick="setPct('tp',4)">+4%</button>
+        <button class="pct-btn tp" onclick="setPct('tp',5)">+5%</button>
+      </div>
+    </div>
+
+    <div class="irow">
+      <label>Stop Loss %</label>
+      <div class="irow-inner">
+        <input type="number" id="iSL" placeholder="2" step="0.5" oninput="calc(); syncPctBtns()">
+        <span class="unit">%</span>
+      </div>
+      <div class="pct-row">
+        <button class="pct-btn sl" onclick="setPct('sl',1.5)">-1.5%</button>
+        <button class="pct-btn sl" onclick="setPct('sl',2)">-2%</button>
+        <button class="pct-btn sl" onclick="setPct('sl',2.5)">-2.5%</button>
+        <button class="pct-btn sl" onclick="setPct('sl',3)">-3%</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RESULT -->
+  <div class="calc-result">
+    <div class="res-grid">
+      <div class="res-item">
+        <div class="res-lbl">Harga TP</div>
+        <div class="res-val g" id="rTP">—</div>
+        <div class="res-sub" id="rTPidr">—</div>
+      </div>
+      <div class="res-item">
+        <div class="res-lbl">Harga SL</div>
+        <div class="res-val r" id="rSL">—</div>
+        <div class="res-sub" id="rSLidr">—</div>
+      </div>
+      <div class="res-item">
+        <div class="res-lbl">Profit (IDR)</div>
+        <div class="res-val g" id="rProfit">—</div>
+        <div class="res-sub" id="rProfitUsd">—</div>
+      </div>
+      <div class="res-item">
+        <div class="res-lbl">Max Loss (IDR)</div>
+        <div class="res-val r" id="rLoss">—</div>
+        <div class="res-sub" id="rLossUsd">—</div>
+      </div>
+      <div class="res-item">
+        <div class="res-lbl">BTC Dapat</div>
+        <div class="res-val b" id="rBTC">—</div>
+        <div class="res-sub" id="rBTCidr">—</div>
+      </div>
+      <div class="res-item">
+        <div class="res-lbl">Kurs Pakai</div>
+        <div class="res-val o" id="rKurs">16.350</div>
+        <div class="res-sub"><a onclick="openKursEdit()" style="color:var(--dim);cursor:pointer;font-size:9px">✏ ubah</a></div>
+      </div>
+    </div>
+
+    <!-- R:R -->
+    <div class="rr-wrap">
+      <div class="rr-top">
+        <span class="rr-lbl">Risk : Reward Ratio</span>
+        <span class="rr-score" id="rrScore">—</span>
+      </div>
+      <div class="rr-track"><div class="rr-fill" id="rrFill" style="width:0%"></div></div>
+    </div>
+
+    <!-- Verdict -->
+    <div class="verdict warn" id="verdict">
+      <span>⬆</span>
+      <span id="verdictText">Masukkan harga entry untuk mulai kalkulasi.</span>
+    </div>
+  </div>
+
+  <div class="calc-actions">
+    <button class="btn-log secondary" onclick="resetCalc()">Reset</button>
+    <button class="btn-log skip" onclick="logSkip()" style="flex:1;padding:12px;border-radius:10px;border:1px solid rgba(61,158,255,.3);background:rgba(61,158,255,.08);color:var(--blue);font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer;transition:all .15s">⊘ Tidak Hit</button>
+    <button class="btn-log primary" onclick="logTrade()">+ Catat Trade</button>
+  </div>
+</div>
+
+<!-- RULES -->
+<div class="rules">
+  <div class="rules-title">📌 Kontrol Harian</div>
+  <div class="rule-item"><span class="bullet">₿</span><span>Maks <b>1 trade</b> per hari — selesai TP atau SL, stop.</span></div>
+  <div class="rule-item"><span class="bullet">₿</span><span>Entry <b>hanya di zona heatmap kuning tebal</b> — jangan FOMO kejar harga.</span></div>
+  <div class="rule-item"><span class="bullet">₿</span><span>Pasang limit sell TP & SL <b>langsung setelah entry</b> — jangan manual.</span></div>
+  <div class="rule-item"><span class="bullet">₿</span><span>Kalau harga tidak sampai zona — <b>tidak trading hari ini</b>. Itu juga keputusan.</span></div>
+  <div class="rule-item"><span class="bullet">₿</span><span>R:R minimum <b>1:2</b> — kalau tidak terpenuhi, skip setup.</span></div>
+</div>
+
+<!-- JURNAL -->
+<div class="sec-lbl">📒 Jurnal Trade</div>
+<div class="journal" id="journal">
+  <div class="empty-j">Belum ada trade hari ini.<br>Catat setelah entry di atas.</div>
+</div>
+
+<!-- MODAL EDIT MODAL -->
+<div class="overlay" id="ovModal">
+  <div class="modal-box">
+    <div class="modal-title">✏ Ubah Modal</div>
+    <div class="modal-input-row">
+      <label>Total Modal (IDR)</label>
+      <input type="number" id="mModalInput" placeholder="250000000">
+    </div>
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closeOverlay('ovModal')">Batal</button>
+      <button class="mbtn confirm" onclick="saveModal()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDIT KURS -->
+<div class="overlay" id="ovKurs">
+  <div class="modal-box">
+    <div class="modal-title">✏ Ubah Kurs USD/IDR</div>
+    <div class="modal-input-row">
+      <label>1 USD = IDR</label>
+      <input type="number" id="mKursInput" placeholder="16350">
+    </div>
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closeOverlay('ovKurs')">Batal</button>
+      <button class="mbtn confirm" onclick="saveKurs()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────
+let state = JSON.parse(localStorage.getItem('btcDaily_v1') || 'null') || {
+  modal: 250_000_000,
+  kurs: 16350,
+  trades: [],
+};
+
+function persist(){ localStorage.setItem('btcDaily_v1', JSON.stringify(state)); }
+
+// ── CLOCK ──────────────────────────────────────────────────
+function tick(){
+  const n = new Date();
+  document.getElementById('clock').textContent =
+    n.toLocaleDateString('id-ID',{weekday:'short',day:'2-digit',month:'short'})
+    + ' ' + n.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+}
+setInterval(tick,1000); tick();
+
+// ── HELPERS ───────────────────────────────────────────────
+const fmt  = v => 'Rp '+Math.round(v).toLocaleString('id-ID');
+const fmtK = v => {
+  if(Math.abs(v)>=1_000_000) return (v/1_000_000).toFixed(1)+'jt';
+  if(Math.abs(v)>=1_000)     return (v/1_000).toFixed(0)+'rb';
+  return v.toFixed(0);
+};
+const fmtU = v => '$'+v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+
+// ── MODAL STRIP ───────────────────────────────────────────
+function refreshModalStrip(){
+  const deployed = state.trades.filter(t=>t.status==='open').reduce((s,t)=>s+t.modalIdr,0);
+  const cash = state.modal - deployed;
+  document.getElementById('dispModal').textContent = fmt(state.modal);
+  document.getElementById('dispDeploy').textContent =
+    `Deployed: ${fmt(deployed)} · Cash: ${fmtK(cash)}`;
+}
+
+// ── KURS ──────────────────────────────────────────────────
+function openKursEdit(){
+  document.getElementById('mKursInput').value = state.kurs;
+  document.getElementById('ovKurs').classList.add('show');
+}
+function saveKurs(){
+  const v = parseFloat(document.getElementById('mKursInput').value);
+  if(v>0){ state.kurs=v; persist(); }
+  document.getElementById('rKurs').textContent = state.kurs.toLocaleString('id-ID');
+  closeOverlay('ovKurs'); calc();
+}
+document.getElementById('rKurs').textContent = state.kurs.toLocaleString('id-ID');
+
+// ── MODAL EDIT ────────────────────────────────────────────
+function openModalEdit(){
+  document.getElementById('mModalInput').value = state.modal;
+  document.getElementById('ovModal').classList.add('show');
+}
+function saveModal(){
+  const v = parseFloat(document.getElementById('mModalInput').value);
+  if(v>0){ state.modal=v; persist(); refreshModalStrip(); }
+  closeOverlay('ovModal');
+}
+function closeOverlay(id){ document.getElementById(id).classList.remove('show'); }
+
+// ── PCT BUTTONS ───────────────────────────────────────────
+function setPct(type, val){
+  if(type==='tp'){
+    document.getElementById('iTP').value = val;
+    document.querySelectorAll('.pct-btn.tp').forEach(b=> b.classList.toggle('on', parseFloat(b.textContent)===val));
+  } else {
+    document.getElementById('iSL').value = val;
+    document.querySelectorAll('.pct-btn.sl').forEach(b=> b.classList.toggle('on', parseFloat(b.textContent.replace('-',''))===val));
+  }
+  calc();
+}
+function syncPctBtns(){
+  const tp = parseFloat(document.getElementById('iTP').value);
+  const sl = parseFloat(document.getElementById('iSL').value);
+  document.querySelectorAll('.pct-btn.tp').forEach(b=> b.classList.toggle('on', parseFloat(b.textContent)===tp));
+  document.querySelectorAll('.pct-btn.sl').forEach(b=> b.classList.toggle('on', parseFloat(b.textContent.replace('-',''))===sl));
+}
+
+// ── CALCULATOR ────────────────────────────────────────────
+function calc(){
+  const entry  = parseFloat(document.getElementById('iEntry').value);
+  const modal  = parseFloat(document.getElementById('iModal').value) || state.modal * 0.5;
+  const tpPct  = parseFloat(document.getElementById('iTP').value);
+  const slPct  = parseFloat(document.getElementById('iSL').value);
+  const kurs   = state.kurs;
+
+  if(!entry || !tpPct || !slPct){
+    setResult(null); return;
+  }
+
+  const tpPrice  = entry * (1 + tpPct/100);
+  const slPrice  = entry * (1 - slPct/100);
+  const btcAmt   = (modal / kurs) / entry;
+  const profit   = btcAmt * (tpPrice - entry) * kurs;
+  const loss     = btcAmt * (entry - slPrice) * kurs;
+  const rr       = profit / loss;
+
+  // update UI
+  document.getElementById('rTP').textContent      = fmtU(tpPrice);
+  document.getElementById('rTPidr').textContent   = 'Rp '+Math.round(tpPrice*kurs).toLocaleString('id-ID');
+  document.getElementById('rSL').textContent      = fmtU(slPrice);
+  document.getElementById('rSLidr').textContent   = 'Rp '+Math.round(slPrice*kurs).toLocaleString('id-ID');
+  document.getElementById('rProfit').textContent  = '+'+fmt(profit);
+  document.getElementById('rProfitUsd').textContent = '+$'+((profit/kurs).toFixed(0));
+  document.getElementById('rLoss').textContent    = '-'+fmt(loss);
+  document.getElementById('rLossUsd').textContent = '-$'+((loss/kurs).toFixed(0));
+  document.getElementById('rBTC').textContent     = btcAmt.toFixed(6)+' BTC';
+  document.getElementById('rBTCidr').textContent  = fmt(modal)+' modal';
+
+  // RR
+  document.getElementById('rrScore').textContent = '1 : '+rr.toFixed(2);
+  const rrW = Math.min(rr/3*100,100);
+  document.getElementById('rrFill').style.width  = rrW+'%';
+
+  // verdict
+  const vEl = document.getElementById('verdict');
+  const vTx = document.getElementById('verdictText');
+  if(rr >= 2){
+    vEl.className='verdict good';
+    vTx.textContent = `Setup bagus! R:R 1:${rr.toFixed(1)} — layak dieksekusi jika zona heatmap valid.`;
+  } else if(rr >= 1.5){
+    vEl.className='verdict warn';
+    vTx.textContent = `R:R 1:${rr.toFixed(1)} — bisa diterima, tapi coba naikkan TP atau kurangi SL.`;
+  } else {
+    vEl.className='verdict bad';
+    vTx.textContent = `R:R 1:${rr.toFixed(1)} — terlalu kecil. Skip setup ini, tunggu yang lebih baik.`;
+  }
+
+  // store for logging
+  window._calcCache = {entry,modal,tpPct,slPct,tpPrice,slPrice,btcAmt,profit,loss,rr,kurs};
+}
+
+function setResult(v){
+  ['rTP','rTPidr','rSL','rSLidr','rProfit','rProfitUsd','rLoss','rLossUsd','rBTC'].forEach(id=>{
+    document.getElementById(id).textContent='—';
+  });
+  document.getElementById('rrScore').textContent='—';
+  document.getElementById('rrFill').style.width='0%';
+  document.getElementById('verdict').className='verdict warn';
+  document.getElementById('verdictText').textContent='Masukkan harga entry untuk mulai kalkulasi.';
+  window._calcCache=null;
+}
+
+function resetCalc(){
+  ['iEntry','iTP','iSL'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('iModal').value='';
+  document.querySelectorAll('.pct-btn').forEach(b=>b.classList.remove('on'));
+  setResult(null);
+}
+
+// ── LOG SKIP (entry tidak hit) ────────────────────────────
+function logSkip(){
+  const c = window._calcCache;
+  const entry = parseFloat(document.getElementById('iEntry').value);
+  if(!entry){ alert('Isi harga zona entry dulu!'); return; }
+
+  const now = new Date();
+  const trade = {
+    id: Date.now(),
+    date: now.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}),
+    time: now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}),
+    entry: c?.entry || entry,
+    tpPrice: c?.tpPrice || null,
+    slPrice: c?.slPrice || null,
+    tpPct: c?.tpPct || null,
+    slPct: c?.slPct || null,
+    btcAmt: 0,
+    modalIdr: 0,
+    potProfit: c?.profit || null,
+    potLoss: c?.loss || null,
+    rr: c?.rr || null,
+    kurs: state.kurs,
+    status: 'skip',
+    exitPrice: null,
+    realPnl: null,
+    open: false,
+  };
+
+  state.trades.unshift(trade);
+  persist();
+  resetCalc();
+  renderJournal();
+  refreshModalStrip();
+  renderStats();
+}
+
+
+function logTrade(){
+  const c = window._calcCache;
+  if(!c){alert('Isi harga entry dulu!');return;}
+
+  const now = new Date();
+  const trade = {
+    id: Date.now(),
+    date: now.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}),
+    time: now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}),
+    entry: c.entry,
+    tpPrice: c.tpPrice,
+    slPrice: c.slPrice,
+    tpPct: c.tpPct,
+    slPct: c.slPct,
+    btcAmt: c.btcAmt,
+    modalIdr: c.modal,
+    potProfit: c.profit,
+    potLoss: c.loss,
+    rr: c.rr,
+    kurs: c.kurs,
+    status: 'open',   // open | win | loss
+    exitPrice: null,
+    realPnl: null,
+    open: false,
+  };
+
+  state.trades.unshift(trade);
+  persist();
+  resetCalc();
+  renderJournal();
+  refreshModalStrip();
+  renderStats();
+}
+
+// ── CLOSE TRADE ───────────────────────────────────────────
+function closeTrade(id, type){
+  const t = state.trades.find(x=>x.id===id);
+  if(!t) return;
+  const exitInput = document.getElementById('exit_'+id);
+  const exit = parseFloat(exitInput?.value);
+  if(!exit){alert('Masukkan harga exit!');return;}
+
+  t.exitPrice = exit;
+  t.status    = type;
+  t.realPnl   = (exit - t.entry) * t.btcAmt * t.kurs;
+  t.open      = false;
+  persist();
+  renderJournal();
+  refreshModalStrip();
+  renderStats();
+}
+
+function deleteTrade(id){
+  if(!confirm('Hapus trade ini?'))return;
+  state.trades = state.trades.filter(t=>t.id!==id);
+  persist();
+  renderJournal();
+  refreshModalStrip();
+  renderStats();
+}
+
+function toggleDetail(id){
+  const t = state.trades.find(x=>x.id===id);
+  if(t){t.open=!t.open;renderJournal();}
+}
+
+// ── RENDER JOURNAL ────────────────────────────────────────
+function renderJournal(){
+  const el = document.getElementById('journal');
+  if(!state.trades.length){
+    el.innerHTML='<div class="empty-j">Belum ada trade.<br>Catat setelah entry di atas.</div>';
+    return;
+  }
+
+  el.innerHTML = state.trades.map(t=>{
+    const dotCls = t.status==='win'?'win':t.status==='loss'?'loss':t.status==='open'?'open-pos':t.status==='skip'?'skip':'waiting';
+    const statusLabel = {win:'✅ TP Hit',loss:'❌ SL Hit',open:'🟠 Open',skip:'⊘ Tidak Hit'}[t.status]||'—';
+
+    const pnlHtml = t.status==='skip'
+      ? `<div class="ti-pnl" style="color:var(--blue)">Skip</div>`
+      : t.realPnl!==null
+        ? `<div class="ti-pnl ${t.realPnl>=0?'pos':'neg'}">${t.realPnl>=0?'+':''} ${fmtK(t.realPnl)}</div>`
+        : `<div class="ti-pnl neutral">Terbuka</div>`;
+
+    // skip card body
+    if(t.status==='skip'){
+      // deviation display if realBottom already saved
+      let devBlock = '';
+      if(t.realBottom){
+        const selisih  = t.realBottom - t.entry;           // positif = market tidak turun sejauh prediksi
+        const selisihPct = (selisih / t.entry * 100);
+        const arah = selisih > 0 ? 'terlalu tinggi ▲' : 'terlalu rendah ▼';
+        const devColor = Math.abs(selisihPct) <= 1 ? 'var(--green)' : Math.abs(selisihPct) <= 3 ? 'var(--btc)' : 'var(--red)';
+        devBlock = `
+        <div style="background:var(--bg);border:1px solid var(--line2);border-radius:10px;padding:12px 14px;margin-bottom:8px">
+          <div style="font-size:9px;color:var(--dim);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:10px">📐 Evaluasi Akurasi Zona</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+            <div style="background:var(--card);border-radius:8px;padding:8px 10px">
+              <div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Prediksi Zona</div>
+              <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue)">${fmtU(t.entry)}</div>
+            </div>
+            <div style="background:var(--card);border-radius:8px;padding:8px 10px">
+              <div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Bottom Realita</div>
+              <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text)">${fmtU(t.realBottom)}</div>
+            </div>
+            <div style="background:var(--card);border-radius:8px;padding:8px 10px">
+              <div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Selisih</div>
+              <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:${devColor}">${selisih>0?'+':''}${fmtU(selisih)}</div>
+            </div>
+          </div>
+          <div style="margin-top:10px;background:var(--card);border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:11px;color:var(--dim)">Zona prediksimu <b style="color:${devColor}">${Math.abs(selisihPct).toFixed(2)}%</b> ${arah} dari bottom aktual</span>
+            <span style="font-family:var(--mono);font-size:15px;font-weight:700;color:${devColor}">${selisih>0?'+':''}${selisihPct.toFixed(2)}%</span>
+          </div>
+        </div>`;
+      }
+
+      // input form if realBottom not yet saved
+      const inputBlock = !t.realBottom ? `
+      <div class="close-form" style="margin-bottom:8px">
+        <div class="cf-title">📥 Berapa bottom harga hari ini? (USD)</div>
+        <div class="cf-row">
+          <input type="number" id="rb_${t.id}" placeholder="Harga terendah yang dicapai, e.g. 84200">
+          <button class="cf-btn" style="background:rgba(61,158,255,.15);color:var(--blue);border:1px solid rgba(61,158,255,.3);padding:9px 14px;border-radius:8px;border:1px solid;font-family:var(--sans);font-size:12px;font-weight:700;cursor:pointer" onclick="saveRealBottom(${t.id})">Simpan</button>
+        </div>
+      </div>` : '';
+
+      const bodyHtml = t.open ? `
+      <div class="ti-body show">
+        <div style="background:rgba(61,158,255,.05);border:1px solid rgba(61,158,255,.12);border-radius:10px;padding:11px 13px;margin-bottom:8px;display:flex;align-items:flex-start;gap:8px">
+          <span style="font-size:16px">⊘</span>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:2px">Entry tidak tereksekusi — zona tidak dihit</div>
+            <div style="font-size:11px;color:var(--dim);line-height:1.5">Harga tidak turun ke zona prediksi. <b style="color:var(--text)">Ini keputusan BENAR</b> — disiplin menunggu setup valid.</div>
+          </div>
+        </div>
+        ${t.tpPrice ? `<div class="detail-grid" style="margin-bottom:8px">
+          <div class="dg-item"><div class="dg-lbl">Zona Plan</div><div class="dg-val b">${fmtU(t.entry)}</div></div>
+          <div class="dg-item"><div class="dg-lbl">TP Plan</div><div class="dg-val g">${fmtU(t.tpPrice)}</div></div>
+          <div class="dg-item"><div class="dg-lbl">SL Plan</div><div class="dg-val r">${fmtU(t.slPrice)}</div></div>
+        </div>` : ''}
+        ${inputBlock}
+        ${devBlock}
+        <button class="del-trade" onclick="deleteTrade(${t.id})">× Hapus</button>
+      </div>` : '';
+
+      // header subtitle: show deviation % if available
+      const skipSub = t.realBottom
+        ? `Zona ${fmtU(t.entry)} · meleset ${((t.realBottom-t.entry)/t.entry*100).toFixed(2)}% dari bottom`
+        : `Zona ${fmtU(t.entry)}${t.tpPct?' · TP '+t.tpPct+'%':''} — tidak hit`;
+
+      // pnl area: show deviation badge if available
+      const skipPnl = t.realBottom
+        ? `<div class="ti-pnl" style="color:${Math.abs((t.realBottom-t.entry)/t.entry*100)<=1?'var(--green)':Math.abs((t.realBottom-t.entry)/t.entry*100)<=3?'var(--btc)':'var(--red)'}">${((t.realBottom-t.entry)/t.entry*100)>0?'+':''}${((t.realBottom-t.entry)/t.entry*100).toFixed(2)}%</div>`
+        : `<div class="ti-pnl" style="color:var(--blue)">⊘ Skip</div>`;
+
+      return `
+<div class="trade-item" style="border-color:rgba(61,158,255,.18)">
+  <div class="ti-head ${t.open?'open':''}" onclick="toggleDetail(${t.id})">
+    <div class="ti-dot ${dotCls}"></div>
+    <div class="ti-info">
+      <div class="date">${t.date} · ${t.time}</div>
+      <div class="price" style="color:var(--dim);font-size:12px">${skipSub}</div>
+    </div>
+    <div class="ti-right" style="display:flex;align-items:center;gap:8px">
+      <div>
+        ${skipPnl}
+        <div class="ti-status" style="color:var(--blue)">${statusLabel}</div>
+      </div>
+      <button onclick="event.stopPropagation();deleteTrade(${t.id})" style="background:none;border:none;color:var(--dim2);font-size:18px;cursor:pointer;padding:2px 4px;transition:color .15s;line-height:1" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--dim2)'">×</button>
+    </div>
+  </div>
+  ${bodyHtml}
+</div>`;
+    }
+
+    const bodyHtml = t.open ? `
+    <div class="ti-body show">
+      <div class="detail-grid">
+        <div class="dg-item"><div class="dg-lbl">Entry</div><div class="dg-val">${fmtU(t.entry)}</div></div>
+        <div class="dg-item"><div class="dg-lbl">TP</div><div class="dg-val g">${fmtU(t.tpPrice)}</div></div>
+        <div class="dg-item"><div class="dg-lbl">SL</div><div class="dg-val r">${fmtU(t.slPrice)}</div></div>
+        <div class="dg-item"><div class="dg-lbl">Modal</div><div class="dg-val">${fmtK(t.modalIdr)}</div></div>
+        <div class="dg-item"><div class="dg-lbl">BTC</div><div class="dg-val">${t.btcAmt.toFixed(5)}</div></div>
+        <div class="dg-item"><div class="dg-lbl">R:R</div><div class="dg-val o">1:${t.rr.toFixed(1)}</div></div>
+        <div class="dg-item"><div class="dg-lbl">Pot. Profit</div><div class="dg-val g">+${fmtK(t.potProfit)}</div></div>
+        <div class="dg-item"><div class="dg-lbl">Pot. Loss</div><div class="dg-val r">-${fmtK(t.potLoss)}</div></div>
+        <div class="dg-item"><div class="dg-lbl">Kurs</div><div class="dg-val">${t.kurs.toLocaleString('id-ID')}</div></div>
+      </div>
+      ${t.status==='open'?`
+      <div class="close-form">
+        <div class="cf-title">Update Hasil</div>
+        <div class="cf-row">
+          <input type="number" id="exit_${t.id}" placeholder="Harga exit USD (e.g. ${Math.round(t.tpPrice)})">
+          <button class="cf-btn close-win" onclick="closeTrade(${t.id},'win')">TP ✅</button>
+          <button class="cf-btn close-loss" onclick="closeTrade(${t.id},'loss')">SL ❌</button>
+        </div>
+      </div>`:`
+      <div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg);border-radius:8px;padding:10px 12px;margin-top:2px">
+        <span style="font-size:11px;color:var(--dim);font-family:var(--mono)">Exit: ${fmtU(t.exitPrice)}</span>
+        <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:${t.realPnl>=0?'var(--green)':'var(--red)'}">${t.realPnl>=0?'+':''}${fmt(t.realPnl)}</span>
+      </div>`}
+      <button class="del-trade" onclick="deleteTrade(${t.id})">× Hapus</button>
+    </div>` : '';
+
+    return `
+<div class="trade-item">
+  <div class="ti-head ${t.open?'open':''}" onclick="toggleDetail(${t.id})">
+    <div class="ti-dot ${dotCls}"></div>
+    <div class="ti-info">
+      <div class="date">${t.date} · ${t.time}</div>
+      <div class="price">Entry ${fmtU(t.entry)} · ${t.tpPct}% TP · ${t.slPct}% SL</div>
+    </div>
+    <div class="ti-right" style="display:flex;align-items:center;gap:8px">
+      <div>
+        ${pnlHtml}
+        <div class="ti-status">${statusLabel}</div>
+      </div>
+      <button onclick="event.stopPropagation();deleteTrade(${t.id})" style="background:none;border:none;color:var(--dim2);font-size:18px;cursor:pointer;padding:2px 4px;transition:color .15s;line-height:1" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--dim2)'">×</button>
+    </div>
+  </div>
+  ${bodyHtml}
+</div>`;
+  }).join('');
+}
+
+// ── SAVE REAL BOTTOM (skip evaluation) ───────────────────
+function saveRealBottom(id){
+  const t = state.trades.find(x=>x.id===id);
+  if(!t) return;
+  const v = parseFloat(document.getElementById('rb_'+id)?.value);
+  if(!v){ alert('Masukkan harga bottom realita!'); return; }
+  t.realBottom = v;
+  t.open = true; // keep open to show result
+  persist();
+  renderJournal();
+  renderStats();
+}
+
+// ── STATS ─────────────────────────────────────────────────
+function renderStats(){
+  const done   = state.trades.filter(t=>t.status==='win'||t.status==='loss');
+  const wins   = done.filter(t=>t.status==='win');
+  const wr     = done.length ? Math.round(wins.length/done.length*100) : null;
+  const totalPnl = state.trades.filter(t=>t.realPnl!==null).reduce((s,t)=>s+t.realPnl,0);
+
+  // zone accuracy from skip trades that have realBottom recorded
+  const skipsWithData = state.trades.filter(t=>t.status==='skip' && t.realBottom);
+  const avgDev = skipsWithData.length
+    ? skipsWithData.reduce((s,t)=> s + Math.abs((t.realBottom - t.entry)/t.entry*100), 0) / skipsWithData.length
+    : null;
+
+  const wrEl = document.getElementById('sbWR');
+  wrEl.textContent = wr!==null ? wr+'%' : '—';
+  wrEl.className   = 'sb-val '+(wr===null?'o':wr>=50?'g':'r');
+
+  const pEl = document.getElementById('sbPnl');
+  pEl.textContent = totalPnl===0?'Rp 0':(totalPnl>0?'+':'')+fmt(totalPnl);
+  pEl.className   = 'sb-val '+(totalPnl>0?'g':totalPnl<0?'r':'o');
+
+  const zEl = document.getElementById('sbZone');
+  const zSub = document.getElementById('sbZoneSub');
+  if(avgDev !== null){
+    zEl.textContent  = (avgDev<=1?'~':'')+avgDev.toFixed(2)+'%';
+    zEl.className    = 'sb-val '+(avgDev<=1?'g':avgDev<=3?'o':'r');
+    zSub.textContent = `dari ${skipsWithData.length} skip`;
+  } else {
+    zEl.textContent  = '—';
+    zEl.className    = 'sb-val b';
+    zSub.textContent = 'avg meleset';
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────
+refreshModalStrip();
+renderJournal();
+renderStats();
+</script>
+</body>
+</html>
